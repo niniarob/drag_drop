@@ -1,24 +1,48 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState, SetStateAction, Dispatch } from 'react';
 import './App.css';
+import { CreateNewGroupInput } from './components/CreateNewGroupInput';
+import ItemsInput from './components/ItemsInput';
+
+interface Item {
+  title: string;
+  text: string;
+}
 
 function App() {
+  const [items, setItems]: [Item[], Dispatch<SetStateAction<Item[]>>] = useState<Item[]>([]);
+
+  useEffect(() => {
+    const existingItems = JSON.parse(localStorage.getItem('items') || '[]') as Item[];
+    setItems(existingItems);
+  }, []);
+
+  const addItemToLocalStorage = (newItem: Item) => {
+    const existingItems: Item[] = JSON.parse(localStorage.getItem('items') || '[]');
+
+    if (newItem.title.trim() !== '' && !existingItems.some((item) => item.title === newItem.title)) {
+      const updatedItems: Item[] = [...existingItems, newItem];
+      localStorage.setItem('items', JSON.stringify(updatedItems));
+      setItems(updatedItems);
+    } else {
+      console.log('Input is empty or item with the same title already exists');
+    }
+  };
+
+  const deleteItem = (index: number) => {
+    const updatedItems = [...items];
+    updatedItems.splice(index, 1);
+    localStorage.setItem('items', JSON.stringify(updatedItems));
+    setItems(updatedItems);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <CreateNewGroupInput onAddItem={addItemToLocalStorage} />
+      <div className="flex-wrap">
+        {items.map((item, index) => (
+          <ItemsInput key={index} title={item.title} onDelete={() => deleteItem(index)} />
+        ))}
+      </div>
     </div>
   );
 }
